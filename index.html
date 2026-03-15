@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #121212; color: white; }
+        .grid { display: grid; grid-template-columns: repeat(3, 100px); gap: 10px; margin-top: 20px; }
+        .cell { width: 100px; height: 100px; background: #1e1e1e; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; cursor: pointer; border-radius: 8px; }
+        .cell:hover { background: #333; }
+        .cell.x { color: #00d4ff; }
+        .cell.o { color: #ff006e; }
+        #status { margin-top: 20px; font-size: 1.5rem; }
+        button { margin-top: 20px; padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: #00d4ff; color: black; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>AI Tic-Tac-Toe</h1>
+    <div id="status">Your turn (X)</div>
+    <div class="grid" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+    <button onclick="resetGame()">Restart</button>
+
+    <script>
+        /* JavaScript goes here */
+const boardElement = document.getElementById('board');
+const cells = document.querySelectorAll('.cell');
+const statusText = document.getElementById('status');
+let board = ["", "", "", "", "", "", "", "", ""];
+const human = "X";
+const ai = "O";
+
+// 1. Handle Human Click
+cells.forEach(cell => cell.addEventListener('click', (e) => {
+    const idx = e.target.dataset.index;
+    if (board[idx] === "" && !checkWinner(board)) {
+        makeMove(idx, human);
+        if (!checkWinner(board) && board.includes("")) {
+            statusText.innerText = "AI is thinking...";
+            setTimeout(aiTurn, 500); // Slight delay for realism
+        }
+    }
+}));
+
+function makeMove(idx, player) {
+    board[idx] = player;
+    cells[idx].innerText = player;
+    cells[idx].classList.add(player.toLowerCase());
+    updateStatus();
+}
+
+function updateStatus() {
+    const winner = checkWinner(board);
+    if (winner === "X") statusText.innerText = "You Win!";
+    else if (winner === "O") statusText.innerText = "AI Wins!";
+    else if (!board.includes("")) statusText.innerText = "It's a Draw!";
+}
+
+// 2. AI Turn using Minimax
+function aiTurn() {
+    let bestScore = -Infinity;
+    let move;
+    for (let i = 0; i < 9; i++) {
+        if (board[i] === "") {
+            board[i] = ai;
+            let score = minimax(board, 0, false);
+            board[i] = "";
+            if (score > bestScore) {
+                bestScore = score;
+                move = i;
+            }
+        }
+    }
+    makeMove(move, ai);
+}
+
+const scores = { O: 10, X: -10, draw: 0 };
+
+function minimax(board, depth, isMaximizing) {
+    let result = checkWinner(board);
+    if (result !== null) return scores[result === "draw" ? "draw" : result];
+
+    if (isMaximizing) {
+        let bestScore = -Infinity;
+        for (let i = 0; i < 9; i++) {
+            if (board[i] === "") {
+                board[i] = ai;
+                let score = minimax(board, depth + 1, false);
+                board[i] = "";
+                bestScore = Math.max(score, bestScore);
+            }
+        }
+        return bestScore;
+    } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < 9; i++) {
+            if (board[i] === "") {
+                board[i] = human;
+                let score = minimax(board, depth + 1, true);
+                board[i] = "";
+                bestScore = Math.min(score, bestScore);
+            }
+        }
+        return bestScore;
+    }
+}
+
+function checkWinner(b) {
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (let combo of wins) {
+        if (b[combo[0]] && b[combo[0]] === b[combo[1]] && b[combo[0]] === b[combo[2]]) {
+            return b[combo[0]];
+        }
+    }
+    return b.includes("") ? null : "draw";
+}
+
+function resetGame() {
+    board = ["", "", "", "", "", "", "", "", ""];
+    cells.forEach(c => { c.innerText = ""; c.className = "cell"; });
+    statusText.innerText = "Your turn (X)";
+}
+    </script>
+</body>
+</html>
